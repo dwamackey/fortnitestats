@@ -1,0 +1,100 @@
+import requests
+import json
+import time
+import pandas as pd
+import matplotlib.pyplot as plt
+
+usernames = {'David':'psn(davidmackey)',
+             'Harrison':'psn(AuricBlofeld)',
+             'Ian':'shaking-boughs',
+             'Suckiver':'GullyBoyTundra'
+            }
+
+def requestPlayerStats(playerName,psnName):
+    url = 'https://api.fortnitetracker.com/v1/profile/psn/{}'.format(psnName)
+    apitoken = '29222237-853a-421c-821d-abd673f4a8ba'
+    headers = {'TRN-Api-Key' : apitoken}
+    response = requests.get(url, headers=headers)
+    count_tries = 0
+    while True:
+      try:
+        data = response.content
+        data = data.decode('utf-8')
+        data = json.loads(data)
+        try:
+          solo_games = int(data['stats']['curr_p2']['matches']['value'])
+          solo_wins = int(data['stats']['curr_p2']['top1']['value'])
+          solo_wins_pct = round(float(solo_wins / solo_games) * 100,2)
+          solo_kills = int(data['stats']['curr_p2']['kills']['value'])
+          solo_kills_pg = round(float(solo_kills / solo_games),2)
+          solo_mins = int(data['stats']['curr_p2']['minutesPlayed']['value'])
+          solo_mins_pg = round(float(solo_mins / solo_games),2)
+        except:
+          solo_games = 0
+          solo_wins = 0
+          solo_wins_pct = 0
+          solo_kills = 0
+          solo_kills_pg = 0
+          solo_mins = 0
+          solo_mins_pg = 0
+        try:
+          duo_games = int(data['stats']['curr_p10']['matches']['value'])
+          duo_wins = int(data['stats']['curr_p10']['top1']['value'])
+          duo_wins_pct = round(float(duo_wins / duo_games) * 100,2)
+          duo_kills = int(data['stats']['curr_p10']['kills']['value'])
+          duo_kills_pg = round(float(duo_kills / duo_games),2)
+          duo_mins = int(data['stats']['curr_p10']['minutesPlayed']['value'])
+          duo_mins_pg = round(float(duo_mins / duo_games),2)
+        except:
+          duo_games = 0
+          duo_wins = 0
+          duo_wins_pct = 0
+          duo_kills = 0
+          duo_kills_pg = 0
+          duo_mins = 0
+          duo_mins_pg = 0
+        try:
+          squad_games = int(data['stats']['curr_p9']['matches']['value'])
+          squad_wins = int(data['stats']['curr_p9']['top1']['value'])
+          squad_wins_pct = round(float(squad_wins / squad_games) * 100,2)
+          squad_kills = int(data['stats']['curr_p9']['kills']['value'])
+          squad_kills_pg = round(float(squad_kills / squad_games),2)
+          squad_mins = int(data['stats']['curr_p9']['minutesPlayed']['value'])
+          squad_mins_pg = round(float(squad_mins / squad_games),2)
+        except:
+          squad_games = 0
+          squad_wins = 0
+          squad_wins_pct = 0
+          squad_kills = 0
+          squad_kills_pg = 0
+          squad_mins = 0
+          squad_mins_pg = 0
+        break
+      except:
+        time.sleep(2)
+        count_tries += 1
+        if count_tries == 3:
+          break
+
+    stats_dic = {playerName:{'solo_games':solo_games,'duo_games':duo_games,'squad_games':squad_games,
+                'solo_wins':solo_wins,'duo_wins':duo_wins,'squad_wins':squad_wins,
+                'solo_wins_pct':solo_wins_pct,'duo_wins_pct':duo_wins_pct,'squad_wins_pct':squad_wins_pct,
+                'solo_kills':solo_kills,'duo_kills':duo_kills,'squad_kills':squad_kills,
+                'solo_kills_pg':solo_kills_pg,'duo_kills_pg':duo_kills_pg,'squad_kills_pg':squad_kills_pg,
+                'solo_mins':solo_mins,'duo_mins':duo_mins,'squad_mins':squad_mins,
+                'solo_mins_pg':solo_mins_pg,'duo_mins_pg':duo_mins_pg,'squad_mins_pg':squad_mins_pg
+                }}
+    time.sleep(2)
+    return stats_dic
+
+def getPlayerStats(usernames):
+    player_json = {}
+    for key, value in usernames.items():
+        player_stats = requestPlayerStats(key,value)
+        player_json.update(player_stats)
+    df = pd.DataFrame.from_dict(player_json, orient='index')
+    df_transposed = df.T
+    return df_transposed
+
+df = getPlayerStats(usernames)
+print(df)
